@@ -10,6 +10,10 @@
 
 > **Disclaimer:** SehtSnap provides general information and is **not medical advice**. Nutrition values are estimates. Talk to a qualified healthcare professional about your diet.
 
+## Live Demo
+
+Open the [SehtSnap web app](https://sehtsnap-web-524589711748.asia-south1.run.app), create an account, and snap or upload a meal. The web app and Gemini API run on Google Cloud Run.
+
 ## About the Project
 
 Most nutrition apps are built around Western packaged food, so biryani, nihari, daal chawal and karahi are often missing or inaccurate. **SehtSnap focuses on South Asian food.** It recognizes dishes from a photo, understands English, Urdu and Roman Urdu names, estimates nutrition, and adds guidance for people managing diabetes, high blood pressure or high cholesterol.
