@@ -21,6 +21,8 @@ class Settings:
     openai_api_key: str = ""
     firebase_api_key: str = ""
     firebase_project_id: str = ""
+    gemini_model: str = "gemini-3.5-flash"
+    openai_model: str = "gpt-5.4-mini"
     local_db_path: Path = PROJECT_ROOT / "data" / "local.db"
     foods_path: Path = PROJECT_ROOT / "assets" / "data" / "south_asian_foods.json"
 
@@ -47,4 +49,6 @@ def load_settings(env_file: Path | None = None) -> Settings:
         openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
         firebase_api_key=os.getenv("FIREBASE_API_KEY", "").strip(),
         firebase_project_id=os.getenv("FIREBASE_PROJECT_ID", "").strip(),
+        gemini_model=os.getenv("GEMINI_MODEL", "").strip() or Settings.gemini_model,
+        openai_model=os.getenv("OPENAI_MODEL", "").strip() or Settings.openai_model,
     )
