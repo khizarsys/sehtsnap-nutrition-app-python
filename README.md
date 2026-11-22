@@ -10,9 +10,12 @@
 
 > **Disclaimer:** SehtSnap provides general information and is **not medical advice**. Nutrition values are estimates. Talk to a qualified healthcare professional about your diet.
 
-## Live Demo
+## Live Demo and Download
 
-Open the [SehtSnap web app](https://sehtsnap-web-524589711748.asia-south1.run.app), create an account, and snap or upload a meal. The web app and Gemini API run on Google Cloud Run.
+- **Web app:** [https://sehtsnap-web-524589711748.asia-south1.run.app](https://sehtsnap-web-524589711748.asia-south1.run.app)
+- **Android APK:** [Download SehtSnap v0.3.0](https://github.com/khizarsys/sehtsnap-nutrition-app-python/releases/download/v0.3.0/sehtsnap.apk) for 64-bit Android phones
+
+Create an account, then snap or upload a meal. The web app and Gemini API run on Google Cloud Run. The APK is a test build, so Android may ask you to allow installation from this source.
 
 ## About the Project
 
