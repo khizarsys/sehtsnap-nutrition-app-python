@@ -51,9 +51,9 @@ SERVICE_ERROR_MESSAGE = "AI detection is unavailable right now. Please search ma
 SIGN_IN_MESSAGE = "Please sign in again to use AI detection."
 LIMIT_MESSAGE = "AI detection limit reached. Please try later or search manually."
 BACKEND_TIMEOUT_SECONDS = 75
-GEMINI_FALLBACK_MODELS = ("gemini-2.5-flash", "gemini-flash-lite-latest")
+GEMINI_FALLBACK_MODELS = ("gemini-2.5-flash", "gemini-3.1-flash-lite")
 GEMINI_ATTEMPT_TIMEOUT_SECONDS = 15
-TRANSIENT_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
+FALLBACK_STATUS_CODES = frozenset({404, 408, 429, 500, 502, 503, 504})
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 
@@ -139,10 +139,15 @@ def prepare_image(image_bytes: bytes) -> bytes:
 
 
 def is_transient_ai_error(error: Exception) -> bool:
-    """Return True for overload, rate-limit, timeout and connection failures."""
-    return (
-        isinstance(error, httpx.TransportError)
-        or getattr(error, "code", None) in TRANSIENT_STATUS_CODES
+    """Return True for retired-model, overload, rate-limit and connection failures."""
+    if isinstance(error, httpx.TransportError | TimeoutError | ConnectionError):
+        return True
+    if getattr(error, "code", None) in FALLBACK_STATUS_CODES:
+        return True
+    # httpx2 is optional in the mobile app, so identify its errors without importing it.
+    return any(
+        cls.__name__ == "TransportError" and cls.__module__.split(".")[0] == "httpx2"
+        for cls in type(error).__mro__
     )
 
 
@@ -164,6 +169,7 @@ class GeminiProvider:
         self._client = client or genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
+                api_version="v1beta",
                 timeout=GEMINI_ATTEMPT_TIMEOUT_SECONDS * 1000,
                 retry_options=types.HttpRetryOptions(attempts=1),
             ),

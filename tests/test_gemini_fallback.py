@@ -26,8 +26,35 @@ class FakeClient:
         return SimpleNamespace(text=outcome)
 
 
+class Httpx2TransportError(Exception):
+    pass
+
+
+Httpx2TransportError.__name__ = "TransportError"
+Httpx2TransportError.__module__ = "httpx2._exceptions"
+
+
+class Httpx2ReadTimeout(Httpx2TransportError):
+    pass
+
+
 def provider(client: FakeClient) -> GeminiProvider:
     return GeminiProvider("key", "first", ("second", "third"), client=client)
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        TimeoutError("slow"),
+        ConnectionError("offline"),
+        Httpx2ReadTimeout("slow"),
+        StatusError(404),
+    ],
+)
+def test_transport_failures_use_next_model(failure):
+    client = FakeClient({"first": failure, "second": "ok", "third": "unused"})
+    assert provider(client).generate(b"jpeg") == "ok"
+    assert client.calls == ["first", "second"]
 
 
 @pytest.mark.parametrize("failure", [StatusError(503), StatusError(429), httpx.ReadTimeout("slow")])
