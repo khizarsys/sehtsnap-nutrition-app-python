@@ -23,13 +23,14 @@ class Settings:
     firebase_project_id: str = ""
     gemini_model: str = "gemini-3.5-flash"
     openai_model: str = "gpt-5.4-mini"
+    force_demo: bool = False
     local_db_path: Path = PROJECT_ROOT / "data" / "local.db"
     foods_path: Path = PROJECT_ROOT / "assets" / "data" / "south_asian_foods.json"
 
     @property
     def demo_mode(self) -> bool:
         """Use local storage unless both Firebase values are configured."""
-        return not (self.firebase_api_key and self.firebase_project_id)
+        return self.force_demo or not (self.firebase_api_key and self.firebase_project_id)
 
     @property
     def active_ai_key(self) -> str:
@@ -51,4 +52,5 @@ def load_settings(env_file: Path | None = None) -> Settings:
         firebase_project_id=os.getenv("FIREBASE_PROJECT_ID", "").strip(),
         gemini_model=os.getenv("GEMINI_MODEL", "").strip() or Settings.gemini_model,
         openai_model=os.getenv("OPENAI_MODEL", "").strip() or Settings.openai_model,
+        force_demo=os.getenv("DEMO_MODE", "").strip().lower() in {"1", "true", "yes"},
     )
