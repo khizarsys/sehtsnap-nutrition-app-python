@@ -61,6 +61,7 @@ src/sehtsnap/
   models/                 Pydantic models
   screens/                App screens
   widgets/                Reusable UI components
+backend/                  FastAPI service that protects the Gemini key
 assets/data/              South Asian nutrition dataset
 scripts/seed_demo_data.py Demo account and meal logs
 tests/                    Unit tests with mocked AI and network calls
@@ -110,7 +111,34 @@ Prerequisites are the Flutter SDK and Android SDK required by your Flet version.
 flet build apk
 ```
 
-Do not place private API keys in a public APK. For a production release, move AI calls behind a backend that holds the keys.
+`.env` is not packaged. To enable cloud sync and AI detection in the APK, deploy the backend, add `AI_BACKEND_URL` to `.env`, then run:
+
+```bash
+python scripts/write_app_config.py
+flet build apk
+```
+
+The generated `assets/app_config.json` contains only public client settings. It never contains a Gemini or OpenAI key.
+
+## Gemini Backend
+
+The FastAPI service in `backend/` keeps the Gemini key on the server. It verifies Firebase ID tokens, validates images, applies per-user and daily limits, and returns the same detection JSON used by the app.
+
+Run it locally:
+
+```bash
+pip install -r backend/requirements.txt
+cp backend/.env.example backend/.env
+uvicorn --factory backend.app.main:create_app --port 8080
+```
+
+Build the container from the repository root:
+
+```bash
+docker build -f backend/Dockerfile -t sehtsnap-api .
+```
+
+Set `GEMINI_API_KEY` and `FIREBASE_PROJECT_ID` as secrets on your host. Usage limits are stored in memory, so run one instance or replace them with a shared store before scaling out.
 
 ## Running Tests
 
@@ -148,6 +176,7 @@ service cloud.firestore {
 | `AI_PROVIDER` | No | `gemini` (default) or `openai` |
 | `GEMINI_API_KEY` | For Gemini | Google AI Studio API key |
 | `OPENAI_API_KEY` | For OpenAI | OpenAI API key |
+| `AI_BACKEND_URL` | For mobile AI | Deployed SehtSnap API URL |
 | `GEMINI_MODEL` | No | Overrides the default Gemini model |
 | `OPENAI_MODEL` | No | Overrides the default OpenAI model |
 | `DEMO_MODE` | No | `true` forces local demo storage |
@@ -165,7 +194,6 @@ service cloud.firestore {
 
 ## Future Improvements
 
-- Backend proxy for AI keys
 - Persistent sessions and saved preferences
 - Barcode scanning and custom recipes
 - Multiple dishes in one photo
