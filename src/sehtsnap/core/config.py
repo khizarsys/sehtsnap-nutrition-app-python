@@ -25,7 +25,7 @@ class Settings:
     firebase_api_key: str = ""
     firebase_project_id: str = ""
     ai_backend_url: str = ""
-    gemini_model: str = "gemini-3.5-flash"
+    gemini_model: str = "gemini-3.5-flash-lite"
     openai_model: str = "gpt-5.4-mini"
     force_demo: bool = False
     local_db_path: Path = PROJECT_ROOT / "data" / "local.db"

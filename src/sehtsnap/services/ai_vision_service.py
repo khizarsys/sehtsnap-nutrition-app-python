@@ -45,6 +45,9 @@ SERVICE_ERROR_MESSAGE = "AI detection is unavailable right now. Please search ma
 SIGN_IN_MESSAGE = "Please sign in again to use AI detection."
 LIMIT_MESSAGE = "AI detection limit reached. Please try later or search manually."
 BACKEND_TIMEOUT_SECONDS = 75
+GEMINI_FALLBACK_MODELS = ("gemini-2.5-flash", "gemini-flash-lite-latest")
+GEMINI_ATTEMPT_TIMEOUT_SECONDS = 15
+TRANSIENT_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 
@@ -108,37 +111,56 @@ def prepare_image(image_bytes: bytes) -> bytes:
         raise ValueError("Unreadable image") from error
 
 
-class GeminiProvider:
-    """Google Gemini vision provider."""
+def is_transient_ai_error(error: Exception) -> bool:
+    """Return True for overload, rate-limit, timeout and connection failures."""
+    return (
+        isinstance(error, httpx.TransportError)
+        or getattr(error, "code", None) in TRANSIENT_STATUS_CODES
+    )
 
-    def __init__(self, api_key: str, model: str) -> None:
+
+class GeminiProvider:
+    """Google Gemini vision provider with fallback models for temporary outages."""
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        fallback_models: tuple[str, ...] = GEMINI_FALLBACK_MODELS,
+        client: object | None = None,
+    ) -> None:
         from google import genai
         from google.genai import types
 
         self._types = types
-        self._model = model
-        self._client = genai.Client(
+        self._models = tuple(dict.fromkeys((model, *fallback_models)))
+        self._client = client or genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
-                timeout=REQUEST_TIMEOUT_SECONDS * 1000,
-                retry_options=types.HttpRetryOptions(
-                    attempts=2,
-                    initial_delay=1.0,
-                    http_status_codes=[429, 500, 502, 503, 504],
-                ),
+                timeout=GEMINI_ATTEMPT_TIMEOUT_SECONDS * 1000,
+                retry_options=types.HttpRetryOptions(attempts=1),
             ),
         )
 
     def generate(self, jpeg_bytes: bytes) -> str:
-        response = self._client.models.generate_content(
-            model=self._model,
-            contents=[
-                self._types.Part.from_bytes(data=jpeg_bytes, mime_type="image/jpeg"),
-                DETECTION_PROMPT,
-            ],
-            config=self._types.GenerateContentConfig(response_mime_type="application/json"),
-        )
-        return response.text or ""
+        last_error: Exception | None = None
+        for model in self._models:
+            try:
+                response = self._client.models.generate_content(
+                    model=model,
+                    contents=[
+                        self._types.Part.from_bytes(data=jpeg_bytes, mime_type="image/jpeg"),
+                        DETECTION_PROMPT,
+                    ],
+                    config=self._types.GenerateContentConfig(response_mime_type="application/json"),
+                )
+                return response.text or ""
+            except Exception as error:
+                if not is_transient_ai_error(error):
+                    raise
+                last_error = error
+                logger.warning("Gemini model %s unavailable: %s", model, type(error).__name__)
+        raise last_error or RuntimeError("No Gemini model configured")
 
 
 class OpenAIProvider:
