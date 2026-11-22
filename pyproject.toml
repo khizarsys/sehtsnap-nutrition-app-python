@@ -18,16 +18,33 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest==9.2.0", "ruff==0.17.6"]
+dev = [
+    "CacheControl==0.15.0",
+    "fastapi==0.165.0",
+    "google-auth==2.63.1",
+    "pytest==9.2.0",
+    "requests==2.34.2",
+    "ruff==0.17.6",
+    "uvicorn==0.54.0",
+]
+
+[tool.flet]
+org = "com.khizarsys"
+project = "sehtsnap"
+product = "SehtSnap"
+
+[tool.flet.app]
+path = "."
+exclude = ["backend", "data", "tests", "scripts", "screenshots", "build", "dist", "storage"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = [".", "src"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-src = ["src", "tests"]
+src = [".", "src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]

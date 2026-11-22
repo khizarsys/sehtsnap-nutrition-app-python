@@ -11,6 +11,11 @@ pydantic==2.14.4
 python-dotenv==1.2.4
 RapidFuzz==3.14.6
 
-# Development
+# Development and backend tests
+CacheControl==0.15.0
+fastapi==0.165.0
+google-auth==2.63.1
 pytest==9.2.0
+requests==2.34.2
 ruff==0.17.6
+uvicorn==0.54.0
