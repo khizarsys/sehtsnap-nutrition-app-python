@@ -1,4 +1,5 @@
 flet==1.1.2
+flet-camera==1.1.2
 flet-charts==1.1.2
 flet-cli==1.1.2
 flet-desktop==1.1.2

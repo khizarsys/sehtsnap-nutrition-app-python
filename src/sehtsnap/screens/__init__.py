@@ -6,6 +6,7 @@ import flet as ft
 
 from sehtsnap.screens.advice import build_advice
 from sehtsnap.screens.auth import build_auth
+from sehtsnap.screens.camera import build_camera
 from sehtsnap.screens.food_detail import build_food_detail
 from sehtsnap.screens.history import build_history
 from sehtsnap.screens.home import build_home
@@ -21,6 +22,7 @@ BUILDERS = {
     "/setup": build_setup,
     "/home": build_home,
     "/snap": build_snap,
+    "/camera": build_camera,
     "/log": build_log,
     "/history": build_history,
     "/profile": build_profile,

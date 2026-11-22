@@ -8,6 +8,7 @@ from pathlib import Path
 import flet as ft
 
 from sehtsnap.core import theme
+from sehtsnap.screens.camera import camera_available
 from sehtsnap.services.ai_vision_service import MAX_UPLOAD_BYTES
 from sehtsnap.widgets.common import app_view, card, heading, muted, show_message
 from sehtsnap.widgets.food_card import food_card
@@ -71,6 +72,9 @@ def build_snap(router) -> ft.View:
         if not image:
             show_message(router.page, "That photo could not be opened.")
             return
+        await analyze_photo(image)
+
+    async def analyze_photo(image: bytes) -> None:
         preview.content = ft.Image(src=image, fit=ft.BoxFit.COVER, width=640, height=220)
         preview.visible = True
         status.visible = True
@@ -101,6 +105,9 @@ def build_snap(router) -> ft.View:
         router.page.update()
 
     show_results("")
+    captured_photo, state.pending_photo = state.pending_photo, None
+    if captured_photo:
+        router.page.run_task(analyze_photo, captured_photo)
     return app_view(
         router,
         "/snap",
@@ -114,7 +121,14 @@ def build_snap(router) -> ft.View:
                         heading("Photograph your meal", 16),
                         muted("Use one clear photo of a single dish for the best result."),
                         ft.FilledButton(
-                            content="Take or choose photo",
+                            content="Take photo",
+                            icon=ft.Icons.CAMERA_ALT,
+                            height=48,
+                            visible=camera_available(router.page),
+                            on_click=lambda _: router.go("/camera"),
+                        ),
+                        ft.OutlinedButton(
+                            content="Choose from gallery",
                             icon=ft.Icons.PHOTO_LIBRARY,
                             height=48,
                             on_click=pick_photo,

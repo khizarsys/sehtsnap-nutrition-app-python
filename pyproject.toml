@@ -1,12 +1,13 @@
 [project]
 name = "sehtsnap"
-version = "0.1.0"
+version = "0.2.0"
 description = "AI nutrition app (Python + Flet) that recognizes South Asian food from photos and calculates calories"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Khizar Hayat" }]
 dependencies = [
     "flet==1.1.2",
+    "flet-camera==1.1.2",
     "flet-charts==1.1.2",
     "httpx==0.28.1",
     "pillow==13.0.0",

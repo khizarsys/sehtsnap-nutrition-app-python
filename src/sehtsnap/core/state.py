@@ -69,6 +69,7 @@ class AppState:
         self.ai_provider = settings.ai_provider
         self.units = "metric"
         self.pending_servings = 1.0
+        self.pending_photo: bytes | None = None
         self._listeners: list[Callable[[], None]] = []
         if settings.demo_mode:
             self.auth = auth or LocalAuthService(settings.local_db_path)
@@ -123,6 +124,7 @@ class AppState:
         self.user = None
         self.profile = None
         self.pending_servings = 1.0
+        self.pending_photo = None
         self.notify()
 
     def save_profile(self, profile: UserProfile) -> None:

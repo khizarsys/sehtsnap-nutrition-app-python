@@ -64,7 +64,9 @@ def test_listeners_are_notified(state):
 
 
 def test_sign_out_clears_session(state):
+    state.pending_photo = b"private-photo"
     state.sign_out()
+    assert state.pending_photo is None
     assert state.user is None
     assert state.profile is None
 
