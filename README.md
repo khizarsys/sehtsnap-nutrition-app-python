@@ -135,7 +135,7 @@ uvicorn --factory backend.app.main:create_app --port 8080
 Build the container from the repository root:
 
 ```bash
-docker build -f backend/Dockerfile -t sehtsnap-api .
+docker build -t sehtsnap-api .
 ```
 
 Set `GEMINI_API_KEY` and `FIREBASE_PROJECT_ID` as secrets on your host. Usage limits are stored in memory, so run one instance or replace them with a shared store before scaling out.

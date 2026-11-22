@@ -1,5 +1,5 @@
-# Build from the repository root:
-# docker build -f backend/Dockerfile -t sehtsnap-api .
+# Backend API image. Build from the repository root:
+# docker build -t sehtsnap-api .
 FROM python:3.13-slim
 
 WORKDIR /srv

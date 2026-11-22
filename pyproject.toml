@@ -35,7 +35,7 @@ product = "SehtSnap"
 
 [tool.flet.app]
 path = "."
-exclude = ["backend", "data", "tests", "scripts", "screenshots", "build", "dist", "storage"]
+exclude = ["backend", "Dockerfile", "data", "tests", "scripts", "screenshots", "build", "dist", "storage"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
