@@ -83,7 +83,11 @@ def build_settings(router) -> ft.View:
                 ft.Column(
                     spacing=14,
                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-                    controls=[heading("Preferences", 16), ft.Row([provider]), ft.Row([units])],
+                    controls=[
+                        heading("Preferences", 16),
+                        ft.Row([provider], visible=not state.settings.ai_backend_url),
+                        ft.Row([units]),
+                    ],
                 )
             ),
             card(

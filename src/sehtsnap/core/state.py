@@ -157,7 +157,7 @@ class AppState:
         return [(day, round(value, 1)) for day, value in totals.items()]
 
     def detect(self, image_bytes: bytes) -> DetectionOutcome:
-        service = AIVisionService.from_settings(self.settings, self.ai_provider)
+        service = AIVisionService.from_settings(self.settings, self.ai_provider, self._id_token)
         return service.detect(image_bytes)
 
     def advice_for(self, food: FoodItem) -> Advice:

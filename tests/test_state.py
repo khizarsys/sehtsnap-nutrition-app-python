@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from sehtsnap.core.config import Settings
+from sehtsnap.core.config import Settings, load_settings
 from sehtsnap.core.state import AppState, default_meal, sum_entries
 from sehtsnap.core.units import cm_to_inches, inches_to_cm, kg_to_lb, lb_to_kg
 from sehtsnap.models import Gender, MealType, UserProfile
@@ -27,6 +27,11 @@ def test_settings_without_firebase_use_demo_mode():
     assert Settings(
         firebase_api_key="key", firebase_project_id="project", force_demo=True
     ).demo_mode
+
+
+def test_packaged_app_uses_flet_storage(tmp_path, monkeypatch):
+    monkeypatch.setenv("FLET_APP_STORAGE_DATA", str(tmp_path))
+    assert load_settings(tmp_path / "missing.env").local_db_path == tmp_path / "local.db"
 
 
 def test_add_and_remove_food(state):
