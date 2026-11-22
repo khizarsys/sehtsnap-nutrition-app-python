@@ -75,6 +75,19 @@ def test_parse_repairs_serving_estimates(servings, expected):
     assert parse_detection(raw).serving_estimate == expected
 
 
+def test_parse_accepts_detection_wrapped_in_list():
+    raw = '[{"dish": "Chicken Pulao", "confidence": 0.92, "serving_estimate": 1.5}]'
+    result = parse_detection(raw)
+    assert result.dish == "Chicken Pulao"
+    assert result.serving_estimate == 1.5
+
+
+@pytest.mark.parametrize("raw", ['["Roti"]', "[1]", "[[]]"])
+def test_parse_rejects_lists_without_detection(raw):
+    with pytest.raises(AIResponseError):
+        parse_detection(raw)
+
+
 def test_parse_accepts_percentage_confidence():
     raw = '{"dish": "Roti", "confidence": 90, "serving_estimate": 2}'
     assert parse_detection(raw).confidence == 0.9

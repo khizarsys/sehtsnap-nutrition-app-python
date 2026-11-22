@@ -116,6 +116,8 @@ def parse_detection(raw: str) -> DetectionResult:
         text = fenced.group(1)
     try:
         payload = json.loads(text)
+        if isinstance(payload, list) and payload:
+            payload = payload[0]
         if not isinstance(payload, dict):
             raise AIResponseError("Response must be a JSON object")
         return DetectionResult.model_validate(_normalize_detection(payload))
