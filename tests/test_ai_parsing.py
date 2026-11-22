@@ -58,12 +58,26 @@ def test_parse_json_inside_code_fence():
         '{"dish": "Daal"}',
         '{"dish": "", "confidence": 0.5, "serving_estimate": 1}',
         '{"dish": "Daal", "confidence": 1.5, "serving_estimate": 1}',
-        '{"dish": "Daal", "confidence": 0.5, "serving_estimate": 0}',
+        '{"dish": "Daal", "confidence": 101, "serving_estimate": 1}',
     ],
 )
 def test_parse_rejects_invalid_responses(raw):
     with pytest.raises(AIResponseError):
         parse_detection(raw)
+
+
+@pytest.mark.parametrize(
+    ("servings", "expected"),
+    [("12", 10), ("0", 1), ("null", 1), ('"3"', 3), ('"many"', 1), ("0.1", 0.25), ("NaN", 1)],
+)
+def test_parse_repairs_serving_estimates(servings, expected):
+    raw = f'{{"dish": "Roti", "confidence": 0.9, "serving_estimate": {servings}}}'
+    assert parse_detection(raw).serving_estimate == expected
+
+
+def test_parse_accepts_percentage_confidence():
+    raw = '{"dish": "Roti", "confidence": 90, "serving_estimate": 2}'
+    assert parse_detection(raw).confidence == 0.9
 
 
 def test_prepare_image_resizes_and_converts_to_jpeg():

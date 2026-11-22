@@ -6,6 +6,7 @@ import base64
 import io
 import json
 import logging
+import math
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -23,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 LOW_CONFIDENCE_THRESHOLD = 0.6
 MAX_IMAGE_SIDE = 1024
+MIN_SERVING_ESTIMATE = 0.25
+MAX_SERVING_ESTIMATE = 10.0
 MAX_UPLOAD_BYTES = 15 * 1024 * 1024
 REQUEST_TIMEOUT_SECONDS = 30
 
@@ -32,8 +35,11 @@ Return only one JSON object with exactly these keys:
 
 Rules:
 - dish: the most specific common dish name, such as "Chicken Biryani" or "Daal Chawal".
+- Use South Asian names instead of generic names. A plain round flatbread or chapati is
+  "Roti"; use "Tandoori Roti", "Naan" or "Paratha" only when clearly visible.
 - confidence: a number from 0 to 1.
-- serving_estimate: visible standard servings, from 0.25 to 10.
+- serving_estimate: visible standard servings, from 0.25 to 10. One roti, naan, paratha,
+  samosa or egg is one serving. If more than 10 are visible, use 10.
 - If the image does not show food, use {"dish": "unknown", "confidence": 0,
   "serving_estimate": 1}.
 - Do not include markdown or explanations."""
@@ -81,6 +87,27 @@ class DetectionOutcome:
         )
 
 
+def _normalize_detection(payload: dict) -> dict:
+    """Repair harmless numeric variations without accepting an invalid dish."""
+    normalized = dict(payload)
+    try:
+        servings = float(normalized.get("serving_estimate", 1))
+    except (TypeError, ValueError):
+        servings = 1.0
+    if not math.isfinite(servings) or servings <= 0:
+        servings = 1.0
+    normalized["serving_estimate"] = min(max(servings, MIN_SERVING_ESTIMATE), MAX_SERVING_ESTIMATE)
+
+    confidence = normalized.get("confidence")
+    if (
+        isinstance(confidence, int | float)
+        and not isinstance(confidence, bool)
+        and 2 <= confidence <= 100
+    ):
+        normalized["confidence"] = confidence / 100
+    return normalized
+
+
 def parse_detection(raw: str) -> DetectionResult:
     """Parse and validate strict JSON, tolerating a surrounding code fence."""
     text = (raw or "").strip()
@@ -91,7 +118,7 @@ def parse_detection(raw: str) -> DetectionResult:
         payload = json.loads(text)
         if not isinstance(payload, dict):
             raise AIResponseError("Response must be a JSON object")
-        return DetectionResult.model_validate(payload)
+        return DetectionResult.model_validate(_normalize_detection(payload))
     except (json.JSONDecodeError, ValidationError) as error:
         raise AIResponseError("Invalid detection response") from error
 
