@@ -108,7 +108,14 @@ class GeminiProvider:
         self._model = model
         self._client = genai.Client(
             api_key=api_key,
-            http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_SECONDS * 1000),
+            http_options=types.HttpOptions(
+                timeout=REQUEST_TIMEOUT_SECONDS * 1000,
+                retry_options=types.HttpRetryOptions(
+                    attempts=2,
+                    initial_delay=1.0,
+                    http_status_codes=[429, 500, 502, 503, 504],
+                ),
+            ),
         )
 
     def generate(self, jpeg_bytes: bytes) -> str:
