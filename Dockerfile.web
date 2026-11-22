@@ -1,0 +1,17 @@
+# Web app image. Build from the repository root:
+# docker build -f Dockerfile.web -t sehtsnap-web .
+FROM python:3.13-slim
+
+WORKDIR /srv
+ENV PYTHONUNBUFFERED=1 HOME=/tmp FLET_FORCE_WEB_SERVER=true FLET_SERVER_IP=0.0.0.0
+
+COPY web/requirements.txt web/requirements.txt
+RUN pip install --no-cache-dir -r web/requirements.txt
+
+COPY main.py main.py
+COPY assets/data assets/data
+COPY src/sehtsnap src/sehtsnap
+
+USER nobody
+EXPOSE 8080
+CMD ["sh", "-c", "FLET_SERVER_PORT=${PORT:-8080} exec python main.py"]

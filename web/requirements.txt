@@ -1,0 +1,9 @@
+flet==1.1.2
+flet-camera==1.1.2
+flet-charts==1.1.2
+flet-web==1.1.2
+httpx==0.28.1
+pillow==13.0.0
+pydantic==2.14.3
+python-dotenv==1.2.4
+RapidFuzz==3.14.6

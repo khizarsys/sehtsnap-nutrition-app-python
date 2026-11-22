@@ -14,10 +14,12 @@ from sehtsnap.widgets.common import app_view, card, heading, muted, show_message
 from sehtsnap.widgets.food_card import food_card
 
 
-def _read_file(file: ft.FilePickerFile) -> bytes | None:
+def _read_file(file: ft.FilePickerFile, allow_local_path: bool) -> bytes | None:
+    """Read picked image data, never trusting a browser-supplied server path."""
     if file.bytes:
-        return bytes(file.bytes)
-    if file.path:
+        data = bytes(file.bytes)
+        return data if len(data) <= MAX_UPLOAD_BYTES else None
+    if file.path and allow_local_path:
         path = Path(file.path)
         if path.stat().st_size > MAX_UPLOAD_BYTES:
             return None
@@ -66,7 +68,7 @@ def build_snap(router) -> ft.View:
         if not files:
             return
         try:
-            image = await asyncio.to_thread(_read_file, files[0])
+            image = await asyncio.to_thread(_read_file, files[0], not router.page.web)
         except OSError:
             image = None
         if not image:

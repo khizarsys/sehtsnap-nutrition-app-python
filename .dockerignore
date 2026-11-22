@@ -1,6 +1,10 @@
 *
 !backend/
 !src/
+!web/
+!main.py
+!assets/
 **/.env
 **/.env.*
 **/__pycache__/
+assets/app_config.json
