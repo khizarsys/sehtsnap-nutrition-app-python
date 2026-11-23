@@ -1,6 +1,6 @@
 [project]
 name = "sehtsnap"
-version = "0.3.1"
+version = "0.3.2"
 description = "AI nutrition app (Python + Flet) that recognizes South Asian food from photos and calculates calories"
 readme = "README.md"
 requires-python = ">=3.11"
