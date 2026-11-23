@@ -13,7 +13,7 @@
 ## Live Demo and Download
 
 - **Android APK:** [Download SehtSnap v0.3.1](https://github.com/khizarsys/sehtsnap-nutrition-app-python/releases/download/v0.3.1/sehtsnap.apk) for 64-bit Android phones
-- **Web app:** Moving to Render. The new link will be added here.
+- **Web app:** [Open SehtSnap](https://sehtsnap-nutrition-app-python-1.onrender.com/). The first load can take 1 to 2 minutes on Render's free plan.
 
 Create an account, then snap or upload a meal. The Gemini API runs on Render, and accounts and food logs use Firebase. The APK is a test build, so Android may ask you to allow installation from this source.
 
