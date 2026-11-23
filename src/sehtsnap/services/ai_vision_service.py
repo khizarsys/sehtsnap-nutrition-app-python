@@ -8,6 +8,7 @@ import json
 import logging
 import math
 import re
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
@@ -51,6 +52,8 @@ SERVICE_ERROR_MESSAGE = "AI detection is unavailable right now. Please search ma
 SIGN_IN_MESSAGE = "Please sign in again to use AI detection."
 LIMIT_MESSAGE = "AI detection limit reached. Please try later or search manually."
 BACKEND_TIMEOUT_SECONDS = 75
+BACKEND_ATTEMPTS = 3
+BACKEND_RETRY_DELAY_SECONDS = 2
 GEMINI_FALLBACK_MODELS = ("gemini-2.5-flash", "gemini-3.1-flash-lite")
 GEMINI_ATTEMPT_TIMEOUT_SECONDS = 15
 FALLBACK_STATUS_CODES = frozenset({404, 408, 429, 500, 502, 503, 504})
@@ -63,6 +66,10 @@ class AIResponseError(ValueError):
 
 class AIServiceError(Exception):
     """A provider failure with a message that is safe to show users."""
+
+
+class BackendUnavailableError(AIServiceError):
+    """A temporary backend failure that is safe to retry."""
 
 
 class VisionProvider(Protocol):
@@ -236,6 +243,7 @@ class BackendProvider:
         base_url: str,
         token_provider: Callable[[], str],
         client: httpx.Client | None = None,
+        sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         parts = urlsplit(base_url)
         secure = parts.scheme == "https" and bool(parts.hostname)
@@ -245,19 +253,34 @@ class BackendProvider:
         self._url = f"{base_url.rstrip('/')}/v1/detect"
         self._token_provider = token_provider
         self._client = client or httpx.Client(timeout=BACKEND_TIMEOUT_SECONDS)
+        self._sleep = sleep
 
     def generate(self, jpeg_bytes: bytes) -> str:
         token = self._token_provider()
         if not token:
             raise AIServiceError(SIGN_IN_MESSAGE)
+        for attempt in range(1, BACKEND_ATTEMPTS + 1):
+            try:
+                return self._send(jpeg_bytes, token)
+            except (AIResponseError, BackendUnavailableError) as error:
+                if attempt == BACKEND_ATTEMPTS:
+                    raise
+                logger.warning("AI backend attempt %d failed: %s", attempt, type(error).__name__)
+                self._sleep(BACKEND_RETRY_DELAY_SECONDS * attempt)
+        raise BackendUnavailableError(SERVICE_ERROR_MESSAGE)
+
+    def _send(self, jpeg_bytes: bytes, token: str) -> str:
         try:
             response = self._client.post(
                 self._url,
                 content=jpeg_bytes,
                 headers={"Authorization": f"Bearer {token}", "Content-Type": "image/jpeg"},
             )
-        except httpx.HTTPError as error:
+        except httpx.TimeoutException as error:
+            # A retry after a full timeout would keep the user waiting for minutes.
             raise AIServiceError(SERVICE_ERROR_MESSAGE) from error
+        except httpx.HTTPError as error:
+            raise BackendUnavailableError(SERVICE_ERROR_MESSAGE) from error
         if response.status_code == 401:
             raise AIServiceError(SIGN_IN_MESSAGE)
         if response.status_code == 429:
@@ -266,8 +289,11 @@ class BackendProvider:
             raise AIServiceError(INVALID_IMAGE_MESSAGE)
         if response.status_code == 502:
             raise AIResponseError("Invalid backend response")
+        if response.status_code >= 500:
+            raise BackendUnavailableError(SERVICE_ERROR_MESSAGE)
         if response.status_code != 200:
             raise AIServiceError(SERVICE_ERROR_MESSAGE)
+        parse_detection(response.text)
         return response.text
 
 

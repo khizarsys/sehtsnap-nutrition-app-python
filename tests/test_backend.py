@@ -142,7 +142,57 @@ def backend_provider(handler, token="token") -> BackendProvider:
         "https://api.example.com/",
         lambda: token,
         httpx.Client(transport=httpx.MockTransport(handler)),
+        sleep=lambda _: None,
     )
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        lambda request: httpx.Response(502, text="bad gateway"),
+        lambda request: httpx.Response(503, json={}),
+        lambda request: httpx.Response(200, text="<html>waking up</html>"),
+        lambda request: (_ for _ in ()).throw(httpx.ReadError("reset", request=request)),
+    ],
+)
+def test_client_retries_temporary_failures(failure):
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        if len(calls) == 1:
+            return failure(request)
+        return httpx.Response(
+            200, json={"dish": "Chicken Biryani", "confidence": 0.9, "serving_estimate": 1}
+        )
+
+    outcome = AIVisionService(backend_provider(handler)).detect(png())
+    assert outcome.result.dish == "Chicken Biryani"
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("status_code", [401, 413, 415, 422, 429])
+def test_client_does_not_retry_permanent_failures(status_code):
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(status_code, json={})
+
+    assert AIVisionService(backend_provider(handler)).detect(png()).error
+    assert len(calls) == 1
+
+
+def test_client_stops_after_three_attempts():
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(502, text="bad gateway")
+
+    outcome = AIVisionService(backend_provider(handler)).detect(png())
+    assert "could not be identified" in outcome.error
+    assert len(calls) == 3
 
 
 def test_client_sends_token_and_image():
