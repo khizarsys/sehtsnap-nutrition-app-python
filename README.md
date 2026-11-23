@@ -12,10 +12,10 @@
 
 ## Live Demo and Download
 
-- **Web app:** [https://sehtsnap-web-524589711748.asia-south1.run.app](https://sehtsnap-web-524589711748.asia-south1.run.app)
-- **Android APK:** [Download SehtSnap v0.3.0](https://github.com/khizarsys/sehtsnap-nutrition-app-python/releases/download/v0.3.0/sehtsnap.apk) for 64-bit Android phones
+- **Android APK:** [Download SehtSnap v0.3.1](https://github.com/khizarsys/sehtsnap-nutrition-app-python/releases/download/v0.3.1/sehtsnap.apk) for 64-bit Android phones
+- **Web app:** Moving to Render. The new link will be added here.
 
-Create an account, then snap or upload a meal. The web app and Gemini API run on Google Cloud Run. The APK is a test build, so Android may ask you to allow installation from this source.
+Create an account, then snap or upload a meal. The Gemini API runs on Render, and accounts and food logs use Firebase. The APK is a test build, so Android may ask you to allow installation from this source.
 
 ## About the Project
 
